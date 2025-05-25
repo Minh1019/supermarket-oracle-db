@@ -7,7 +7,7 @@ Dự án mô phỏng một hệ thống quản lý bán, nhập hàng cho siêu 
 ## 🎯 Mục tiêu dự án
 
 - Xây dựng cơ sở dữ liệu quan hệ chuẩn hóa 3NF cho siêu thị
-- Cài đặt các chức năng nghiệp vụ bằng PL/SQL (trigger, procedure, function)
+- Giải quyết các hoạt động liên quan đến nghiệp vụ bán, nhập hàng bằng PL/SQL (trigger, procedure, function)
 - Thiết lập hệ thống phân quyền theo vai trò người dùng thực tế
 - Đề xuất phương án sao lưu & phục hồi dữ liệu bằng RMAN
 
