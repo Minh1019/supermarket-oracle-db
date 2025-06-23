@@ -23,7 +23,7 @@ CREATE TABLE BoPhan (
     TenBP NVARCHAR2(30) NOT NULL
 );
 
--- Tao bang Nh‚n ViÍn
+-- Tao bang Nh√¢n Vi√™n
 CREATE TABLE NhanVien (
     MaNV VARCHAR2(10) PRIMARY KEY CHECK (REGEXP_LIKE(MaNV, '^NV')),
     TenNV NVARCHAR2(30) NOT NULL,
@@ -49,7 +49,7 @@ CREATE TABLE KhachHang (
     NgaySinh DATE ,
     DiaChi NVARCHAR2(30),
     SoDienThoai CHAR(11),
-    Hang NVARCHAR2(10) DEFAULT 'KhÙng'
+    Hang NVARCHAR2(10) DEFAULT 'Kh√¥ng'
 );
 
 -- Tao bang Nhom hang
@@ -84,7 +84,14 @@ CREATE TABLE HoaDonBan (
     FOREIGN KEY (MaCH) REFERENCES CuaHang(MaCH),
     FOREIGN KEY (MaNV) REFERENCES NhanVien(MaNV),
     FOREIGN KEY (MaKH) REFERENCES KhachHang(MaKH)
+)
+PARTITION BY RANGE (NgayLap) (
+    PARTITION p_2022 VALUES LESS THAN (TO_DATE('01-01-2023','DD-MM-YYYY')),
+    PARTITION p_2023 VALUES LESS THAN (TO_DATE('01-01-2024','DD-MM-YYYY')),
+    PARTITION p_2024 VALUES LESS THAN (TO_DATE('01-01-2025','DD-MM-YYYY')),
+    PARTITION p_2025 VALUES LESS THAN (TO_DATE('01-01-2026','DD-MM-YYYY'))
 );
+
 
 
 -- Tao bang Chi tiet hoa don ban
@@ -104,11 +111,18 @@ CREATE TABLE HoaDonNhap (
     MaHDN VARCHAR2(10) PRIMARY KEY CHECK (REGEXP_LIKE(MaHDN, '^HDN')),
     NgayLap DATE NOT NULL,
     TongTien NUMBER NOT NULL,
-    MaCH VARCHAR2(10)NOT NULL,
-    MaNCC VARCHAR2(10)NOT NULL,
+    MaCH VARCHAR2(10) NOT NULL,
+    MaNCC VARCHAR2(10) NOT NULL,
     FOREIGN KEY (MaCH) REFERENCES CuaHang(MaCH),
     FOREIGN KEY (MaNCC) REFERENCES NhaCungCap(MaNCC)
+)
+PARTITION BY RANGE (NgayLap) (
+    PARTITION p_2022 VALUES LESS THAN (TO_DATE('01-01-2023', 'DD-MM-YYYY')),
+    PARTITION p_2023 VALUES LESS THAN (TO_DATE('01-01-2024', 'DD-MM-YYYY')),
+    PARTITION p_2024 VALUES LESS THAN (TO_DATE('01-01-2025', 'DD-MM-YYYY')),
+    PARTITION p_2025 VALUES LESS THAN (TO_DATE('01-01-2026', 'DD-MM-YYYY'))
 );
+
 
 -- Tao bang Chi tiet hoa don nhap
 CREATE TABLE CT_HoaDonNhap (
@@ -140,12 +154,13 @@ SELECT * FROM MATHANG;
 SELECT * FROM HOADONBAN;
 SELECT * FROM CT_HOADONBAN;
 SELECT * FROM HOADONNHAP;
+SELECT * FROM HoaDonNhap PARTITION (p_2023);
 SELECT * FROM CT_HOADONNHAP;
 SELECT * FROM TONKHO;
 
 
 
-----------------------------DE XUAT VA GIAI QUYET CAC YEU CAU NGHIEP VU BANG SQL V¿ PL/SQL-------------------------------------------
+----------------------------DE XUAT VA GIAI QUYET CAC YEU CAU NGHIEP VU BANG SQL V√Ä PL/SQL-------------------------------------------
 
 ------------------Quan ly ton kho-----------------------------------
 -- Kiem tra cac mat hang sap het hang
@@ -194,10 +209,10 @@ END;
 
 ----------NGHEP VU QUAN LY BAN HANG ------------------
 
---Cap nhat cot giam gi· trÍn bang hÛa don b·n chi tiet : 
---Neu kh·ch h‡ng l‡ th‡nh viÍn thÏ giam 10%, 
---neu l‡ VIP thÏ giam 15% trÍn moi mat h‡ng 
---sau do cap nhat lai cot tong tien o bang hÛa don b·n 
+--Cap nhat cot giam gi√° tr√™n bang h√≥a don b√°n chi tiet : 
+--Neu kh√°ch h√†ng l√† th√†nh vi√™n th√¨ giam 10%, 
+--neu l√† VIP th√¨ giam 15% tr√™n moi mat h√†ng 
+--sau do cap nhat lai cot tong tien o bang h√≥a don b√°n 
 
                               
 UPDATE CT_Hoadonban
@@ -206,7 +221,7 @@ WHERE mahdb IN (
     SELECT HDB.mahdb
     FROM HoadonBan HDB
     JOIN khachhang  KH ON HDB.makh = KH.makh
-    WHERE KH.hang = 'Th‡nh ViÍn');
+    WHERE KH.hang = 'Th√†nh Vi√™n');
 
 UPDATE CT_Hoadonban
 SET giamgia = 0.15 * giabanle * Soluongban
@@ -239,7 +254,7 @@ DECLARE
     TongTien NUMBER;
 BEGIN
     TongTien := TongSoTienMuaHang('&MKH');
-    DBMS_OUTPUT.PUT_LINE('T?ng s? ti?n mua h‡ng: ' || TongTien);
+    DBMS_OUTPUT.PUT_LINE('T?ng s? ti?n mua h√†ng: ' || TongTien);
 END;
 
 
@@ -250,19 +265,19 @@ FOR EACH ROW
 DECLARE
     TongTienKhachHang NUMBER;
 BEGIN
-    -- TÌnh t?ng ti?n t?t c? hÛa ??n c?a kh·ch h‡ng
+    -- T√≠nh t?ng ti?n t?t c? h√≥a ??n c?a kh√°ch h√†ng
     SELECT SUM(TongTien) INTO TongTienKhachHang
     FROM HoaDonBan
     WHERE MaKH = :NEW.MaKH;
 
-    -- Ki?m tra v‡ c?p nh?t h?ng kh·ch h‡ng d?a trÍn t?ng ti?n
+    -- Ki?m tra v√† c?p nh?t h?ng kh√°ch h√†ng d?a tr√™n t?ng ti?n
     IF TongTienKhachHang >= 10000000 THEN
         UPDATE KhachHang
         SET Hang = 'VIP'
         WHERE MaKH = :NEW.MaKH;
     ELSIF TongTienKhachHang >= 000000 THEN
         UPDATE KhachHang
-        SET Hang = 'Th‡nh viÍn'
+        SET Hang = 'Th√†nh vi√™n'
         WHERE MaKH = :NEW.MaKH;
     END IF;
 END;
@@ -281,7 +296,7 @@ LEFT JOIN MatHang MH ON NH.MaNH = MH.MaNH
 GROUP BY NH.MaNH, NH.TenNhomHang;
 
 
---Nha cung cap d„ cung cap nhung mat hang nao
+--Nha cung cap d√£ cung cap nhung mat hang nao
 CREATE OR REPLACE PROCEDURE 
 NCC_MH (TNCC NhaCungCap.MaNCC%type)
 as
@@ -344,14 +359,14 @@ WHERE EXTRACT(MONTH FROM NgayLap)=1
 GROUP BY CH.MaCH,CH.DiaChi;
 
 
---Tong so tien hang da nhap trong thang 08 cua mÙi cua hang
+--Tong so tien hang da nhap trong thang 08 cua m√¥i cua hang
 SELECT CH.MaCH,CH.DiaChi, Sum(HDN.TongTien) "Tong Tien"
 FROM HoaDonNhap HDN Join CuaHang CH on HDN.MaCH= CH.MaCH
 WHERE EXTRACT(MONTH FROM NgayLap)= 8
 GROUP BY CH.MaCH,CH.DiaChi;
 
 
---Tinh doanh thu theo thang cua cua hang cÛ ma CH01
+--Tinh doanh thu theo thang cua cua hang c√≥ ma CH01
 SELECT 
     EXTRACT(MONTH FROM NgayLap) AS Thang,
     SUM(TongTien) AS DoanhThu
@@ -373,9 +388,9 @@ UPDATE NhanVien
 SET LuongCoBan = 
     (SELECT 
         CASE 
-            WHEN TENBP = 'Nh‚n s?' THEN 15000000
-            WHEN TENBP = 'B·n h‡ng' THEN 8000000
-            WHEN TENBP = 'Kho h‡ng' THEN 14000000
+            WHEN TENBP = 'Nh√¢n s?' THEN 15000000
+            WHEN TENBP = 'B√°n h√†ng' THEN 8000000
+            WHEN TENBP = 'Kho h√†ng' THEN 14000000
             ELSE 18000000
         END
     FROM BoPhan
@@ -399,7 +414,7 @@ SELECT NhanVien.MaNV, NhanVien.TenNV
 FROM NhanVien
 INNER JOIN BOPHAN BP ON NHANVIEN.MABP = BP.MABP
 LEFT JOIN HoaDonBan ON NhanVien.MaNV = HoaDonBan.MaNV
-WHERE HoaDonBan.MaHDB IS NULL AND TENBP ='B·n H‡ng';
+WHERE HoaDonBan.MaHDB IS NULL AND TENBP ='B√°n H√†ng';
 
 --Dua ra nhan vien ban duoc nhieu don hang nhat
 SELECT NV.MaNV, NV.TenNV, COUNT(HDB.MaHDB) AS So_luong_don_hang
@@ -423,17 +438,17 @@ BEGIN
     INTO rowNV
     FROM NhanVien
     WHERE MaNV = MNV;
-    -- Hi?n th? thÙng tin
-    DBMS_OUTPUT.PUT_LINE('TÍn nh‚n viÍn: ' || rowNV.TenNv);
-    DBMS_OUTPUT.PUT_LINE('Gioi tÌnh: ' || rowNV.Gioitinh);
-    DBMS_OUTPUT.PUT_LINE('Ng‡y sinh: ' || TO_CHAR(rowNV.Ngaysinh, 'DD/MM/YYYY'));
-    DBMS_OUTPUT.PUT_LINE('Ng‡y v‡o l‡m: ' || TO_CHAR(rowNV.Ngayvaolam, 'DD/MM/YYYY'));
+    -- Hi?n th? th√¥ng tin
+    DBMS_OUTPUT.PUT_LINE('T√™n nh√¢n vi√™n: ' || rowNV.TenNv);
+    DBMS_OUTPUT.PUT_LINE('Gioi t√≠nh: ' || rowNV.Gioitinh);
+    DBMS_OUTPUT.PUT_LINE('Ng√†y sinh: ' || TO_CHAR(rowNV.Ngaysinh, 'DD/MM/YYYY'));
+    DBMS_OUTPUT.PUT_LINE('Ng√†y v√†o l√†m: ' || TO_CHAR(rowNV.Ngayvaolam, 'DD/MM/YYYY'));
     DBMS_OUTPUT.PUT_LINE('Dia chi: ' || rowNV.Diachi);
     DBMS_OUTPUT.PUT_LINE('So dien thoai: ' || rowNV.SDT);
     DBMS_OUTPUT.PUT_LINE('Luong co ban: ' || rowNV.Luongcoban);
     DBMS_OUTPUT.PUT_LINE('Phu cap: ' || rowNV.Phucap);
-    DBMS_OUTPUT.PUT_LINE('M„ bo phan: ' || rowNV.MaBP);
-    DBMS_OUTPUT.PUT_LINE('M„ cua h‡ng: ' ||rowNV.MaCH);
+    DBMS_OUTPUT.PUT_LINE('M√£ bo phan: ' || rowNV.MaBP);
+    DBMS_OUTPUT.PUT_LINE('M√£ cua h√†ng: ' ||rowNV.MaCH);
 END;
 EXEC GetEmployeeInfo('&MNV');
 
@@ -449,13 +464,13 @@ BEGIN
         WHERE MaCH = MCH
     )
     LOOP
-        DBMS_OUTPUT.PUT_LINE('TÍn nh‚n viÍn: ' || rec.TenNV);
-        DBMS_OUTPUT.PUT_LINE('Gioi tÌnh: ' || rec.Gioitinh);
-        DBMS_OUTPUT.PUT_LINE('Ng‡y sinh: ' || TO_CHAR(rec.Ngaysinh, 'DD/MM/YYYY'));
-        DBMS_OUTPUT.PUT_LINE('Ng‡y v‡o l‡m: ' || TO_CHAR(rec.Ngayvaolam, 'DD/MM/YYYY'));
+        DBMS_OUTPUT.PUT_LINE('T√™n nh√¢n vi√™n: ' || rec.TenNV);
+        DBMS_OUTPUT.PUT_LINE('Gioi t√≠nh: ' || rec.Gioitinh);
+        DBMS_OUTPUT.PUT_LINE('Ng√†y sinh: ' || TO_CHAR(rec.Ngaysinh, 'DD/MM/YYYY'));
+        DBMS_OUTPUT.PUT_LINE('Ng√†y v√†o l√†m: ' || TO_CHAR(rec.Ngayvaolam, 'DD/MM/YYYY'));
         DBMS_OUTPUT.PUT_LINE('Dia chi: ' || rec.DiaChi);
         DBMS_OUTPUT.PUT_LINE('So dien thoai: ' || rec.SDT);
-        DBMS_OUTPUT.PUT_LINE('M„ bo phan: ' || rec.MaBP);
+        DBMS_OUTPUT.PUT_LINE('M√£ bo phan: ' || rec.MaBP);
         DBMS_OUTPUT.PUT_LINE('-----------------------');
     END LOOP;
 END;
@@ -469,21 +484,21 @@ BEGIN
         FROM NhanVien
         INNER JOIN BOPHAN BP ON NHANVIEN.MABP = BP.MABP
         LEFT JOIN HoaDonBan ON NhanVien.MaNV = HoaDonBan.MaNV
-        WHERE HoaDonBan.MaHDB IS NULL AND TENBP ='B·n H‡ng'
+        WHERE HoaDonBan.MaHDB IS NULL AND TENBP ='B√°n H√†ng'
     )
     LOOP
-        -- XÛa nh‚n viÍn
+        -- X√≥a nh√¢n vi√™n
         DELETE FROM NhanVien
         WHERE MaNV = rec.MaNV;
 
-        DBMS_OUTPUT.PUT_LINE('Da xÛa nh‚n viÍn cÛ m„ ' || rec.MaNV);
+        DBMS_OUTPUT.PUT_LINE('Da x√≥a nh√¢n vi√™n c√≥ m√£ ' || rec.MaNV);
     END LOOP;
-    DBMS_OUTPUT.PUT_LINE('Ho‡n tat!');
+    DBMS_OUTPUT.PUT_LINE('Ho√†n tat!');
 END;
 
 CREATE OR REPLACE PROCEDURE DanhSachNhanVienTheoBoPhan(MBP VARCHAR2) IS
 BEGIN
-  -- L?p qua m?i nh‚n viÍn trong b? ph?n ?Û v‡ in ra thÙng tin
+  -- L?p qua m?i nh√¢n vi√™n trong b? ph?n ?√≥ v√† in ra th√¥ng tin
   FOR r IN (SELECT MaNV, TenNV, Gioitinh, Ngaysinh, Diachi, SDT, Luongcoban, Phucap
             FROM NhanVien
             WHERE MaBP = MBP) LOOP
@@ -517,12 +532,12 @@ NEXT 10M MAXSIZE UNLIMITED;
 
 ------------------------------------------------------------TAO PROFILE QUY DINH HAN MUC ------------------------------------------------
 CREATE PROFILE user_profile LIMIT
-    SESSIONS_PER_USER          2         -- T?i ?a s? phiÍn m?i ng??i d˘ng cÛ th? m?
-    CONNECT_TIME               180       -- T?i ?a th?i gian k?t n?i (ph˙t)
-    IDLE_TIME                  15        -- T?i ?a th?i gian khÙng ho?t ??ng (ph˙t)
-    FAILED_LOGIN_ATTEMPTS      5         -- S? l?n ??ng nh?p th?t b?i t?i ?a tr??c khi kho· t‡i kho?n
-    PASSWORD_LIFE_TIME         90        -- Th?i gian t?i ?a c?a m?t kh?u (ng‡y)
-    PASSWORD_LOCK_TIME         3;         -- Th?i gian kho· t‡i kho?n sau qu· nhi?u l?n ??ng nh?p th?t b?i (ng‡y)
+    SESSIONS_PER_USER          2         -- T?i ?a s? phi√™n m?i ng??i d√πng c√≥ th? m?
+    CONNECT_TIME               180       -- T?i ?a th?i gian k?t n?i (ph√∫t)
+    IDLE_TIME                  15        -- T?i ?a th?i gian kh√¥ng ho?t ??ng (ph√∫t)
+    FAILED_LOGIN_ATTEMPTS      5         -- S? l?n ??ng nh?p th?t b?i t?i ?a tr??c khi kho√° t√†i kho?n
+    PASSWORD_LIFE_TIME         90        -- Th?i gian t?i ?a c?a m?t kh?u (ng√†y)
+    PASSWORD_LOCK_TIME         3;         -- Th?i gian kho√° t√†i kho?n sau qu√° nhi?u l?n ??ng nh?p th?t b?i (ng√†y)
     
 -----------------------------------------------------------------TAO USER VA ROLE ------------------------------------------------
 --TAO USER CHO GIAM DOC
@@ -537,7 +552,7 @@ TEMPORARY TABLESPACE temp_ts;
 GRANT CREATE SESSION TO GIAMDOC;
 GRANT DBA TO GIAMDOC;
 
---TAO USER NH¬N VI N THU NGAN
+--TAO USER NH√ÇN VI√äN THU NGAN
 CREATE USER NVBH
 IDENTIFIED BY 12345
 DEFAULT TABLESPACE data_ts
@@ -545,7 +560,7 @@ QUOTA 100M ON data_ts
 ACCOUNT UNLOCK
 TEMPORARY TABLESPACE temp_ts
 PROFILE user_profile;
---TAO ROLE NH¬N VI N THU NG¬N
+--TAO ROLE NH√ÇN VI√äN THU NG√ÇN
 CREATE ROLE role_banhang;
 GRANT CREATE SESSION TO role_banhang;
 GRANT SELECT, INSERT, UPDATE ON GIAMDOC.HOADONBAN TO role_banhang;
@@ -563,7 +578,7 @@ QUOTA 100M ON data_ts
 ACCOUNT UNLOCK
 TEMPORARY TABLESPACE temp_ts
 PROFILE user_profile;
---TAO ROLE CHO NH¬N VI N KHO
+--TAO ROLE CHO NH√ÇN VI√äN KHO
 CREATE ROLE role_kho;
 GRANT CREATE SESSION TO role_kho;
 GRANT SELECT, INSERT, UPDATE ON GIAMDOC.TONKHO TO role_kho;
@@ -605,7 +620,7 @@ QUOTA 100M ON data_ts
 ACCOUNT UNLOCK
 TEMPORARY TABLESPACE temp_ts
 PROFILE user_profile;
---TAO ROLE CHO NHAN VIEN QUAN L› NH¬N SU 
+--TAO ROLE CHO NHAN VIEN QUAN L√ù NH√ÇN SU 
 CREATE ROLE role_nhansu;
 GRANT CREATE SESSION TO role_nhansu;
 GRANT SELECT, INSERT, UPDATE, DELETE ON GIAMDOC.NHANVIEN TO role_nhansu;
